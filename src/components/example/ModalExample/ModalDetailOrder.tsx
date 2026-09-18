@@ -41,6 +41,8 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ order }) => 
           <p><span className="font-semibold">Khách hàng:</span> {order.user.fullName}</p>
           <p><span className="font-semibold">Số điện thoại:</span> {order.phone}</p>
           <p><span className="font-semibold">Địa chỉ:</span> {order.address}</p>
+          <p><span className="font-semibold">Phí vận chuyển:</span> {order.shippingFee ? `${order.shippingFee.toLocaleString("vi-VN")} ₫` : "0 ₫"}</p>
+          {order.ghnOrderCode && <p><span className="font-semibold">Mã đơn GHN:</span> {order.ghnOrderCode}</p>}
           <p><span className="font-semibold">Ngày đặt:</span> {formatDateTime(order.orderDate)}</p>
           <p><span className="font-semibold">Trạng thái:</span> {getStatusBadge(order.orderStatus)}</p>
         </div>

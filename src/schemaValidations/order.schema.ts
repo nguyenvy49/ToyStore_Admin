@@ -30,6 +30,8 @@ export const OrderItemSchema = z.object({
   orderDate: z.string(), // ISO date string
   phone: z.string(),
   address: z.string(),
+  shippingFee: z.number().optional(),
+  ghnOrderCode: z.string().nullable().optional(),
   totalPrice: z.number(),
   orderStatus: z.number(), // 0,1,2,3,4,...
   createdBy: z.string(),
