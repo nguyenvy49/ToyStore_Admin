@@ -32,6 +32,7 @@ export const OrderItemSchema = z.object({
   address: z.string(),
   shippingFee: z.number().optional(),
   ghnOrderCode: z.string().nullable().optional(),
+  ghnStatus: z.string().nullable().optional(),
   totalPrice: z.number(),
   orderStatus: z.number(), // 0,1,2,3,4,...
   createdBy: z.string(),

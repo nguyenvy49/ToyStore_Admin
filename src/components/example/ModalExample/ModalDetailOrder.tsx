@@ -7,22 +7,14 @@ interface OrderDetailModalProps {
   order: OrderType | null;
 }
 
-const getStatusBadge = (status: number) => {
-  const base = "px-3 py-1 rounded-full text-sm font-medium";
-  switch (status) {
-    case 0:
-      return <span className={`${base} bg-yellow-100 text-yellow-700`}>Chờ xác nhận</span>;
-    case 1:
-      return <span className={`${base} bg-blue-100 text-blue-700`}>Đã xác nhận</span>;
-    case 2:
-      return <span className={`${base} bg-purple-100 text-purple-700`}>Đang giao hàng</span>;
-    case 3:
-      return <span className={`${base} bg-green-100 text-green-700`}>Hoàn thành</span>;
-    case 4:
-      return <span className={`${base} bg-red-100 text-red-700`}>Đã hủy</span>;
-    default:
-      return <span className={`${base} bg-gray-100 text-gray-700`}>Không xác định</span>;
-  }
+import { getOrderStatusText, getOrderStatusBadgeClass } from "@/utils/ghnStatusHelper";
+
+const getStatusBadge = (status: number, ghnStatus?: string | null) => {
+  return (
+    <span className={getOrderStatusBadgeClass(status, ghnStatus)}>
+      {getOrderStatusText(status, ghnStatus)}
+    </span>
+  );
 };
 
 export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ order }) => {
@@ -44,7 +36,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ order }) => 
           <p><span className="font-semibold">Phí vận chuyển:</span> {order.shippingFee ? `${order.shippingFee.toLocaleString("vi-VN")} ₫` : "0 ₫"}</p>
           {order.ghnOrderCode && <p><span className="font-semibold">Mã đơn GHN:</span> {order.ghnOrderCode}</p>}
           <p><span className="font-semibold">Ngày đặt:</span> {formatDateTime(order.orderDate)}</p>
-          <p><span className="font-semibold">Trạng thái:</span> {getStatusBadge(order.orderStatus)}</p>
+          <p><span className="font-semibold">Trạng thái:</span> {getStatusBadge(order.orderStatus, order.ghnStatus)}</p>
         </div>
       </div>
 

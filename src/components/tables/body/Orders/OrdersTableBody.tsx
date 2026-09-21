@@ -22,6 +22,8 @@ type BadgeColor =
   | "light"
   | "dark";
 
+import { getOrderStatusText, getOrderStatusBadgeClass } from "@/utils/ghnStatusHelper";
+
 interface NewsTableBodyProps {
   tableData: OrderType[];
   onOpenModalUpdate: (type: "update", id?: string, status?: number) => void;
@@ -29,9 +31,6 @@ interface NewsTableBodyProps {
 }
 
 const OrdersTableBody: React.FC<NewsTableBodyProps> = ({ tableData, onOpenModalUpdate, onOpenModalDetail }: NewsTableBodyProps) => {
-
-  const status = [ "Chờ xác nhận","Đã xác nhận","Đang giao","Hoàn thành","Đã hủy"]
-  const statusColor:BadgeColor[] = ["warning","info","primary","success","error"]
 
   return (
     <>
@@ -64,7 +63,9 @@ const OrdersTableBody: React.FC<NewsTableBodyProps> = ({ tableData, onOpenModalU
             </TableCell>
             {/* Các cột khác */}
             <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-              <Badge color={statusColor[order.orderStatus]} size="sm">{status[order.orderStatus]}</Badge>
+              <span className={getOrderStatusBadgeClass(order.orderStatus, order.ghnStatus)}>
+                {getOrderStatusText(order.orderStatus, order.ghnStatus)}
+              </span>
             </TableCell>
             <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
               <div className="flex flex-col gap-2">
