@@ -17,6 +17,8 @@ import { OrderType } from "@/schemaValidations/order.schema";
 import ModalUpdateOrder from "@/components/example/ModalExample/ModalUpdateOrder";
 import { FormProvider } from "@/context/FormContext";
 import { OrderDetailModal } from "@/components/example/ModalExample/ModalDetailOrder";
+import { HubConnectionBuilder } from "@microsoft/signalr";
+import envConfig from "@/config/envConfig";
 
 const title = ["STT", 'Khách hàng', 'Số điện thoại', "Địa chỉ", "Thời gian đặt", "Tổng tiền", "Người tạo","Người cập nhật", "Trạng thái", "Hàng động"]
 
@@ -75,6 +77,27 @@ export default function OrdersTable() {
 
   useEffect(() => {
     fetchDataTable(urlApi);
+
+    const baseUrl = envConfig.NEXT_PUBLIC_API_URL || "https://cua-hang-do-choi-be.onrender.com";
+    const hubUrl = `${baseUrl.replace(/\/$/, "")}/hubs/order`;
+
+    const connection = new HubConnectionBuilder()
+      .withUrl(hubUrl)
+      .withAutomaticReconnect()
+      .build();
+
+    connection.start()
+      .then(() => console.log("⚡ SignalR connected to OrderHub"))
+      .catch((err) => console.warn("SignalR connection error:", err));
+
+    connection.on("ReceiveOrderStatusUpdate", (data) => {
+      console.log("🔔 Realtime OrderStatusUpdate received via SignalR:", data);
+      fetchDataTable(urlApi);
+    });
+
+    return () => {
+      connection.stop();
+    };
   }, [urlApi]);
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
