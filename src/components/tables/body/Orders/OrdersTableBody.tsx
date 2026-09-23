@@ -8,19 +8,18 @@ import {
 
 import Button from "@/components/ui/button/Button";
 import { FaWrench } from "react-icons/fa";
-import Badge from "@/components/ui/badge/Badge";
 import { FaEye } from "react-icons/fa6";
 import { OrderType } from "@/schemaValidations/order.schema";
-import { formatDateTime,formatCurrency } from "@/utils/format";
+import { formatDateTime, formatCurrency } from "@/utils/format";
 
-type BadgeColor =
-  | "primary"
-  | "success"
-  | "error"
-  | "warning"
-  | "info"
-  | "light"
-  | "dark";
+// type BadgeColor =
+//   | "primary"
+//   | "success"
+//   | "error"
+//   | "warning"
+//   | "info"
+//   | "light"
+//   | "dark";
 
 import { getOrderStatusText, getOrderStatusBadgeClass } from "@/utils/ghnStatusHelper";
 
@@ -35,10 +34,10 @@ const OrdersTableBody: React.FC<NewsTableBodyProps> = ({ tableData, onOpenModalU
   return (
     <>
       <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-        {tableData.map((order,index) => (
+        {tableData.map((order, index) => (
           <TableRow key={order.id}>
             <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-              {index+ 1}
+              {index + 1}
             </TableCell>
             <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
               {order.user.fullName}
