@@ -5,6 +5,7 @@ import MonthlyTarget from "@/components/ecommerce/MonthlyTarget";
 import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
 import StatisticsChart from "@/components/ecommerce/StatisticsChart";
 import RecentOrders from "@/components/ecommerce/RecentOrders";
+import AiInventoryForecastWidget from "@/components/ecommerce/AiInventoryForecastWidget";
 import { TableContextProvider } from "@/context/TableContext";
 
 export const metadata: Metadata = {
@@ -35,6 +36,10 @@ export default function Ecommerce() {
 
       <div className="col-span-12">
         <RecentOrders />
+      </div>
+
+      <div className="col-span-12">
+        <AiInventoryForecastWidget />
       </div>
     </div>
   );
