@@ -17,7 +17,7 @@ type Option = {
 };
 
 export default function AddForm() {
-  const { values, setErrors} = useFormContext();
+  const { values, setErrors } = useFormContext();
   const { openNotification } = useNotification();
   const [optionSelect, setOptionSelect] = useState<Option[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,13 +46,13 @@ export default function AddForm() {
     // validate text fields
     if (!values.CategoryName) newErrors.push({ name: "CategoryName", message: "Tiêu đề không được để trống" });
     if (!values.Image) newErrors.push({ name: "Image", message: "Vui lòng chọn ảnh" });
-    if (!values.ParentId) newErrors.push({ name: "ParentId", message: "Vui lòng chọn danh mục cha" });
+    // if (!values.ParentId) newErrors.push({ name: "ParentId", message: "Vui lòng chọn danh mục cha" });
 
     setErrors(newErrors);
 
     if (newErrors.length === 0) {
       setIsLoading(true);
-      try{
+      try {
         const res = await CategoryService.createCategory(data);
         console.log(res);
         openNotification({
@@ -65,10 +65,10 @@ export default function AddForm() {
         })
         router.push("/categories");
         router.refresh();
-      }catch(error){
+      } catch (error) {
         openNotification({
           message: "Custom Notification",
-          description: "Thêm mới danh mục thất bại: "+ error,
+          description: "Thêm mới danh mục thất bại: " + error,
           placement: "top",
           duration: 3,
           icon: <FaRegSmileBeam style={{ color: "red" }} />,
