@@ -28,7 +28,7 @@ const TextArea: React.FC<BaseTextAreaProps> = ({
           }`}
       >
         <Editor
-          apiKey={envConfig.NEXT_PUBLIC_API_KEY_TINYMCE}
+          tinymceScriptSrc="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"
           onInit={(_evt, editor) => (editorRef.current = editor)}
           value={value}
           onEditorChange={(content) => onChange(content)}
@@ -37,6 +37,8 @@ const TextArea: React.FC<BaseTextAreaProps> = ({
             height: 300,
             menubar: false,
             placeholder,
+            branding: false,
+            promotion: false,
             plugins: [
               "advlist",
               "autolink",
@@ -53,7 +55,6 @@ const TextArea: React.FC<BaseTextAreaProps> = ({
               "insertdatetime",
               "media",
               "table",
-              "code",
               "help",
               "wordcount",
             ],
