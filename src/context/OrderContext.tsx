@@ -11,6 +11,7 @@ interface OrderContextType {
   cart: CartItem[];
   addToCart: (product: ProductType, quantity: number) => void;
   removeFromCart: (id: string) => void;
+  clearCart: () => void;
   totalPrice: number;
 }
 
@@ -38,13 +39,17 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setCart((prev) => prev.filter((c) => c.product.id !== id));
   };
 
+  const clearCart = () => {
+    setCart([]);
+  };
+
   const totalPrice = cart.reduce(
     (sum, c) => sum + c.quantity * c.product.price,
     0
   );
 
   return (
-    <OrderContext.Provider value={{ cart, addToCart, removeFromCart, totalPrice }}>
+    <OrderContext.Provider value={{ cart, addToCart, removeFromCart, clearCart, totalPrice }}>
       {children}
     </OrderContext.Provider>
   );

@@ -19,6 +19,7 @@ import { FormProvider } from "@/context/FormContext";
 import { OrderDetailModal } from "@/components/example/ModalExample/ModalDetailOrder";
 import { HubConnectionBuilder } from "@microsoft/signalr";
 import envConfig from "@/config/envConfig";
+import { AdminSepayQrModal } from "@/components/common/Order/AdminSepayQrModal";
 
 const title = ["STT", 'Khách hàng', 'Số điện thoại', "Địa chỉ", "Thời gian đặt", "Tổng tiền", "Người tạo","Người cập nhật", "Trạng thái", "Hàng động"]
 
@@ -32,8 +33,9 @@ export default function OrdersTable() {
 
   // ✅ quản lý modal
   const { isOpen, openModal, closeModal } = useModal();
-  const [modalType, setModalType] = useState<"update" | "detail" | null>(null);
+  const [modalType, setModalType] = useState<"update" | "detail" | "qr" | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedOrderAmount, setSelectedOrderAmount] = useState<number>(0);
   const [status, setStatus] = useState<number | null>(null);
   const [itemDetail, setItemDetail] = useState<OrderType | null>(null);
 
@@ -54,6 +56,12 @@ export default function OrdersTable() {
   const handleOpenModalDetail = (type: "detail", detailOrder: OrderType) => {
     setModalType(type);
     if (detailOrder) setItemDetail(detailOrder);
+    openModal();
+  };
+  const handleOpenModalQr = (type: "qr", id: string, amount: number) => {
+    setModalType(type);
+    setSelectedId(id);
+    setSelectedOrderAmount(amount);
     openModal();
   };
 
@@ -110,7 +118,12 @@ export default function OrdersTable() {
             {/* Table Body */}
             {loading && <Loading colSpan={title.length} />}
             {!loading && tableData.length > 0 && (
-              <OrdersTableBody tableData={tableData} onOpenModalUpdate={handleOpenModalUpdate} onOpenModalDetail={handleOpenModalDetail} />
+              <OrdersTableBody
+                tableData={tableData}
+                onOpenModalUpdate={handleOpenModalUpdate}
+                onOpenModalDetail={handleOpenModalDetail}
+                onOpenModalQr={handleOpenModalQr}
+              />
             )}
             {!loading && tableData.length === 0 && (
               <NoData colSpan={title.length} title="Không có dữ liệu" />
@@ -129,7 +142,7 @@ export default function OrdersTable() {
         </div>
       </div>
       {/* ✅ Modal */}
-      <Modal isOpen={isOpen} onClose={closeModal}>
+      <Modal isOpen={isOpen && modalType !== "qr"} onClose={closeModal}>
         {modalType === "update" && selectedId && (
           <>
             <FormProvider >
@@ -150,6 +163,20 @@ export default function OrdersTable() {
           </>
         )}
       </Modal>
+
+      {/* Modal Quét mã QR SePay */}
+      {selectedId && (
+        <AdminSepayQrModal
+          isOpen={isOpen && modalType === "qr"}
+          orderId={selectedId}
+          totalAmount={selectedOrderAmount}
+          onClose={closeModal}
+          onPaymentSuccess={() => {
+            fetchDataTable(urlApi);
+            closeModal();
+          }}
+        />
+      )}
     </div>
 
   );

@@ -1,7 +1,8 @@
 "use client";
 import { OrderType } from "@/schemaValidations/order.schema";
 import { formatDateTime } from "@/utils/format";
-import React from "react";
+import React, { useState } from "react";
+import { AdminSepayQrModal } from "@/components/common/Order/AdminSepayQrModal";
 
 interface OrderDetailModalProps {
   order: OrderType | null;
@@ -18,6 +19,8 @@ const getStatusBadge = (status: number, ghnStatus?: string | null) => {
 };
 
 export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ order }) => {
+  const [showQr, setShowQr] = useState(false);
+
   if (!order) return null;
 
   return (
@@ -87,8 +90,20 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ order }) => 
         </table>
       </div>
 
-      {/* Tổng tiền */}
-      <div className="text-right mt-6">
+      {/* Tổng tiền & Hành động */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-gray-100">
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowQr(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-all cursor-pointer"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1H17a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+            </svg>
+            Quét mã QR SePay
+          </button>
+        </div>
         <p className="text-xl font-bold text-gray-800">
           Tổng tiền:{" "}
           <span className="text-red-600">
@@ -96,6 +111,17 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ order }) => 
           </span>
         </p>
       </div>
+
+      {/* Modal QR */}
+      <AdminSepayQrModal
+        isOpen={showQr}
+        orderId={order.id}
+        totalAmount={order.totalPrice}
+        onClose={() => setShowQr(false)}
+        onPaymentSuccess={() => {
+          setShowQr(false);
+        }}
+      />
     </div>
   );
 };
