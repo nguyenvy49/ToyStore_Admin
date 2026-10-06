@@ -3,7 +3,6 @@ import { useRef } from "react";
 import { Editor } from "@tinymce/tinymce-react";
 import Label from "../Label";
 import { BaseTextAreaProps } from "@/types/props";
-import envConfig from "@/config/envConfig";
 
 
 const TextArea: React.FC<BaseTextAreaProps> = ({
