@@ -226,7 +226,7 @@ function GhnStandaloneContent() {
                 </span>
               </div>
               <p className="text-[11px] text-sky-200">
-                Cổng Cập Nhật Trạng Thái Nội Bộ (Độc lập • Không Sidebar)
+                Cổng Cập Nhật Trạng Thái Nội Bộ
               </p>
             </div>
           </div>
@@ -247,10 +247,10 @@ function GhnStandaloneContent() {
         {feedback && (
           <div
             className={`p-3.5 rounded-xl border text-xs font-medium flex items-center gap-2.5 transition ${feedback.type === "success"
-                ? "bg-emerald-50 border-emerald-300 text-emerald-800"
-                : feedback.type === "error"
-                  ? "bg-rose-50 border-rose-300 text-rose-800"
-                  : "bg-blue-50 border-blue-300 text-blue-800"
+              ? "bg-emerald-50 border-emerald-300 text-emerald-800"
+              : feedback.type === "error"
+                ? "bg-rose-50 border-rose-300 text-rose-800"
+                : "bg-blue-50 border-blue-300 text-blue-800"
               }`}
           >
             {feedback.type === "success" ? (
@@ -280,7 +280,7 @@ function GhnStandaloneContent() {
                     handleSearchOrder();
                   }
                 }}
-                placeholder="Nhập mã vận đơn (VD: L8YTTP, DEV_... hoặc Mã đơn) rồi nhấn Enter..."
+                placeholder="Nhập mã vận đơn"
                 className="w-full text-sm font-mono font-bold uppercase border border-gray-300 rounded-xl px-4 py-3 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#f26522] focus:border-transparent outline-none transition"
               />
             </div>
@@ -289,8 +289,8 @@ function GhnStandaloneContent() {
               disabled={searching || !orderCodeInput.trim()}
               onClick={() => handleSearchOrder()}
               className={`px-5 py-3 rounded-xl font-bold text-xs sm:text-sm text-white flex items-center gap-2 transition ${searching || !orderCodeInput.trim()
-                  ? "bg-gray-300 cursor-not-allowed"
-                  : "bg-[#f26522] hover:bg-[#d9531e] shadow-xs active:scale-[0.98]"
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-[#f26522] hover:bg-[#d9531e] shadow-xs active:scale-[0.98]"
                 }`}
             >
               {searching ? (
@@ -306,9 +306,6 @@ function GhnStandaloneContent() {
               )}
             </button>
           </div>
-          <p className="text-[11px] text-gray-400">
-            Gợi ý: Nhập mã vận đơn GHN hoặc mã đơn hàng Shop, sau đó nhấn <strong>Enter</strong> để nạp thông tin đơn.
-          </p>
         </div>
 
         {/* 2. THẺ THÔNG TIN ĐƠN HÀNG KHI TÌM THẤY */}
@@ -464,8 +461,8 @@ function GhnStandaloneContent() {
                     disabled={isSubmitting || !targetStatus || !isStatusAllowed(targetStatus)}
                     onClick={handleUpdateStatus}
                     className={`w-full py-3.5 px-6 rounded-xl font-bold text-xs sm:text-sm text-white shadow-xs flex items-center justify-center gap-2 transition ${isSubmitting || !targetStatus || !isStatusAllowed(targetStatus)
-                        ? "bg-gray-300 cursor-not-allowed text-gray-500 shadow-none"
-                        : "bg-[#f26522] hover:bg-[#d9531e] active:scale-[0.99] shadow-orange-500/20"
+                      ? "bg-gray-300 cursor-not-allowed text-gray-500 shadow-none"
+                      : "bg-[#f26522] hover:bg-[#d9531e] active:scale-[0.99] shadow-orange-500/20"
                       }`}
                   >
                     <FaTruck />
