@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import Link from "next/link";
 import {
   TableBody,
   TableCell,
@@ -7,7 +8,7 @@ import {
 } from "../../../ui/table";
 
 import Button from "@/components/ui/button/Button";
-import { FaWrench } from "react-icons/fa";
+import { FaWrench, FaTruck } from "react-icons/fa";
 import { FaEye } from "react-icons/fa6";
 import { OrderType } from "@/schemaValidations/order.schema";
 import { formatDateTime, formatCurrency } from "@/utils/format";
@@ -107,6 +108,14 @@ const OrdersTableBody: React.FC<NewsTableBodyProps> = ({
                 >
                   Chi tiết
                 </Button>
+                <Link
+                  href={`/ghn-simulator?orderId=${order.id}&orderCode=${encodeURIComponent(order.ghnOrderCode || "")}`}
+                  className="w-20 inline-flex items-center justify-center gap-1 px-1.5 py-1 text-[11px] font-semibold text-white bg-[#f26522] hover:bg-[#d9531e] rounded shadow-xs transition"
+                  title="Mở cổng điều phối GHN mô phỏng"
+                >
+                  <FaTruck className="text-[10px]" />
+                  <span>GHN Hub</span>
+                </Link>
               </div>
             </TableCell>
           </TableRow>

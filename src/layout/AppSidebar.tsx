@@ -23,7 +23,14 @@ const navItems: NavItem[] = [
   { icon: <LiaWarehouseSolid size={20} />, name: "Quản lý kho hàng", path: "/warehouses" },
   { icon: <MdOutlineCategory size={20} />, name: "Quản lý danh mục", path: "/categories" },
   { icon: <AiOutlineProduct size={20} />, name: "Quản lý sản phẩm", path: "/products" },
-  { icon: <RiBillLine size={20} />, name: "Quản lý đơn hàng", path: "/orders" },
+  {
+    icon: <RiBillLine size={20} />,
+    name: "Quản lý đơn hàng",
+    subItems: [
+      { name: "Danh sách đơn hàng", path: "/orders", pro: false },
+      { name: "Mô phỏng GHN (Nội bộ)", path: "/ghn-simulator", pro: false },
+    ],
+  },
   { icon: <FaRegNewspaper size={20} />, name: "Quản lý tin tức", path: "/news" },
   { icon: <RiDiscountPercentLine size={20} />, name: "Quản lý khuyến mãi", path: "/promotions" },
   {
@@ -45,6 +52,7 @@ const navPermissionMap: Record<string, string[]> = {
   "/categories": ["CATEGORY_VIEW"],
   "/products": ["PRODUCT_VIEW"],
   "/orders": ["ORDER_VIEW"],
+  "/ghn-simulator": ["ORDER_VIEW"],
   "/news": ["NEWS_VIEW"],
   "/promotions": ["PROMOTION_VIEW"],
   "/suppliers": ["SUPPLIER_VIEW"],

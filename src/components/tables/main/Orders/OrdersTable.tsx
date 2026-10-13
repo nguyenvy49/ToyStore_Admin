@@ -98,8 +98,30 @@ export default function OrdersTable() {
       .then(() => console.log("⚡ SignalR connected to OrderHub"))
       .catch((err) => console.warn("SignalR connection error:", err));
 
-    connection.on("ReceiveOrderStatusUpdate", (data) => {
+    connection.on("ReceiveOrderStatusUpdate", (data: any) => {
       console.log("🔔 Realtime OrderStatusUpdate received via SignalR:", data);
+      if (data) {
+        const targetId = (data.orderId || data.OrderId || "").toString().toLowerCase();
+        const targetCode = (data.ghnOrderCode || data.GhnOrderCode || "").toString();
+        const newStatus = Number(data.orderStatus ?? data.OrderStatus);
+        const newGhnStatus = data.ghnStatus || data.GhnStatus;
+
+        setTableData((prev) =>
+          prev.map((ord) => {
+            const ordId = (ord.id || "").toString().toLowerCase();
+            const ordCode = (ord.ghnOrderCode || "").toString();
+            if ((targetId && ordId === targetId) || (targetCode && ordCode === targetCode)) {
+              return {
+                ...ord,
+                orderStatus: newStatus,
+                ghnStatus: newGhnStatus || ord.ghnStatus,
+                ghnOrderCode: targetCode || ord.ghnOrderCode,
+              };
+            }
+            return ord;
+          })
+        );
+      }
       fetchDataTable(urlApi);
     });
 
