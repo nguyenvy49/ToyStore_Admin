@@ -1,5 +1,4 @@
 import envConfig from "@/config/envConfig";
-import { get } from "@/utils/request";
 
 export interface GhnWebhookPayload {
   ShopID: number;
