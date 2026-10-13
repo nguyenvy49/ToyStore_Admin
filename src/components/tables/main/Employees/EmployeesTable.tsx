@@ -12,8 +12,9 @@ import { Loading } from "@/components/common/Loading";
 import Pagination from "../../Pagination";
 import { Modal } from "@/components/ui/modal";
 import GrantPermissionModel from "@/components/example/ModalExample/GrantPermissionModel";
+import ModalConfirm from "@/components/example/ModalExample/ModalConfirm";
 
-const title = ["STT", 'Tên nhân viên', 'số điện thoại', 'Email', "Vai trò", "Ngày thuê", "Trạng thái", "Người thêm", "Người sửa", "Hành động"]
+const title = ["STT", "Tên nhân viên", "Số điện thoại", "Email", "Giới tính", "Vai trò", "Ngày tạo", "Trạng thái", "Người thêm", "Người sửa", "Hành động"];
 
 export default function EmployeesTable() {
     const [currentPage, setCurrentPage] = useState(1);
@@ -62,6 +63,8 @@ export default function EmployeesTable() {
     useEffect(() => {
         fetchDataTable(urlApi);
     }, [urlApi]);
+    const activeData = tableData.filter((item) => !item.isDeleted);
+
     return (
         <div>
             <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -73,18 +76,18 @@ export default function EmployeesTable() {
 
                             {/* Body */}
                             {loading && <Loading colSpan={title.length} />}
-                            {!loading && tableData.length > 0 && (
+                            {!loading && activeData.length > 0 && (
                                 <EmployeesBody
-                                    tableData={tableData}
+                                    tableData={activeData}
                                     onOpenModal={handleOpenModal}
                                 />
                             )}
-                            {!loading && tableData.length === 0 && (
+                            {!loading && activeData.length === 0 && (
                                 <NoData colSpan={title.length} title="Không có dữ liệu" />
                             )}
                         </Table>
                         {/* Pagination */}
-                        {!loading && tableData.length > 0 && (
+                        {!loading && activeData.length > 0 && (
                             <div className="w-full flex justify-center mt-4 mb-4">
                                 <Pagination
                                     currentPage={currentPage}
@@ -99,22 +102,37 @@ export default function EmployeesTable() {
             {/* ✅ Modal */}
             <Modal isOpen={isOpen} onClose={closeModal}>
                 {modalType === "role" && selectedId && (
-                    <>
-                        <GrantPermissionModel
-                            id={selectedId}
-                            status={modalStatus}
-                            title="Cập nhật"
-                            description="quyền hạn"
-                            loadData={fetchDataTable}
-                            urlApi={urlApi}
-                            closeModal={closeModal}
-                        />
-                    </>
+                    <GrantPermissionModel
+                        id={selectedId}
+                        status={modalStatus}
+                        title="Cập nhật"
+                        description="quyền hạn"
+                        loadData={fetchDataTable}
+                        urlApi={urlApi}
+                        closeModal={closeModal}
+                    />
                 )}
                 {modalType === "lock" && selectedId && (
-                    <>
-
-                    </>
+                    <ModalConfirm
+                        id={selectedId}
+                        title="Khóa"
+                        description="tài khoản nhân viên"
+                        onHandle={PermissionService.lockUser}
+                        closeModal={closeModal}
+                        loadData={fetchDataTable}
+                        urlApi={urlApi}
+                    />
+                )}
+                {modalType === "restore" && selectedId && (
+                    <ModalConfirm
+                        id={selectedId}
+                        title="Mở khóa"
+                        description="tài khoản nhân viên"
+                        onHandle={PermissionService.restoreUser}
+                        closeModal={closeModal}
+                        loadData={fetchDataTable}
+                        urlApi={urlApi}
+                    />
                 )}
             </Modal>
         </div>

@@ -9,6 +9,7 @@ import { PermissionService } from "@/services/permissionService";
 import { groupPermissions } from "@/utils/format";
 import { PermissionType } from "@/schemaValidations/permission.schema";
 import { Loading } from "@/components/common/Loading";
+import { NoData } from "@/components/common/NoData";
 import { useNotification } from "@/context/NotificationContext";
 
 interface PermissionsUser {
@@ -33,22 +34,51 @@ export default function BasicTables() {
   const fetchDataTable = async () => {
     try {
       setLoading(true);
-      const res = await PermissionService.getListPermission();
-      const resSales = await PermissionService.getListPermissionByStaffType(1);
-      const resWarehouse = await PermissionService.getListPermissionByStaffType(2);
+
+      const [resAll, resSales, resWarehouse] = await Promise.all([
+        PermissionService.getListPermission().catch((err) => {
+          console.error("Lỗi getListPermission:", err);
+          return [];
+        }),
+        PermissionService.getListPermissionByStaffType(1).catch((err) => {
+          console.error("Lỗi getListPermissionByStaffType(1):", err);
+          return [];
+        }),
+        PermissionService.getListPermissionByStaffType(2).catch((err) => {
+          console.error("Lỗi getListPermissionByStaffType(2):", err);
+          return [];
+        }),
+      ]);
+
+      const parsePermissionList = (data: any): PermissionType[] => {
+        if (!data) return [];
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data.result)) return data.result;
+        if (Array.isArray(data.items)) return data.items;
+        if (Array.isArray(data.data)) return data.data;
+        return [];
+      };
+
       const uniquePermissions = (list: PermissionType[]) => {
         const map = new Map<string, PermissionType>();
-        list.forEach(item => map.set(item.id, item)); // id là duy nhất
+        list.forEach((item) => {
+          if (item?.id) map.set(item.id, item);
+        });
         return Array.from(map.values());
       };
 
+      const salesList = parsePermissionList(resSales);
+      const warehouseList = parsePermissionList(resWarehouse);
+      const allList = parsePermissionList(resAll);
+
       setRoleState({
-        sale: uniquePermissions(resSales.result),
-        warehouse: uniquePermissions(resWarehouse.result),
+        sale: uniquePermissions(salesList),
+        warehouse: uniquePermissions(warehouseList),
       });
-      setPermissions(groupPermissions(res));
+
+      setPermissions(groupPermissions(allList));
     } catch (error) {
-      console.log(error);
+      console.error("Lỗi tải dữ liệu phân quyền:", error);
     } finally {
       setLoading(false);
     }
@@ -89,7 +119,7 @@ export default function BasicTables() {
           description: `Phân quyền thất bại: ` + error,
           placement: "top",
           duration: 3,
-          style: { borderLeft: "5px solid res" },
+          style: { borderLeft: "5px solid red" },
         });
       } finally {
         setLoadingPermission(false);
@@ -116,12 +146,15 @@ export default function BasicTables() {
               {loading && (
                 <Loading colSpan={title.length} />
               )}
-              {!loading && (
+              {!loading && permissions.length > 0 && (
                 <AuthorizationBody
                   tableData={permissions}
                   role={roleState}
                   onChange={setRoleState}
                 />
+              )}
+              {!loading && permissions.length === 0 && (
+                <NoData colSpan={title.length} title="Chưa có dữ liệu chức năng để phân quyền" />
               )}
             </Table>
           </div>

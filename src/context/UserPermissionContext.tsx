@@ -21,15 +21,18 @@ export const UserPermissionProvider: React.FC<{ children: React.ReactNode }> = (
       const res: UserPermissionsType = await PermissionService.getPermissionUser(); // API trả về { userId, userName, permissions: [...] }
       console.log("Fetched user permissions:", res);
       // Lọc trùng permission nếu cần
-      const uniquePermissions = (list: PermissionType[]) => {
+      const uniquePermissions = (list?: PermissionType[]) => {
+        if (!list || !Array.isArray(list)) return [];
         const map = new Map<string, PermissionType>();
-        list.forEach(item => map.set(item.id, item));
+        list.forEach(item => {
+          if (item?.id) map.set(item.id, item);
+        });
         return Array.from(map.values());
       };
 
       setUserPermissions({
         ...res,
-        permissions: uniquePermissions(res.permissions),
+        permissions: uniquePermissions(res?.permissions),
       });
     } catch (error) {
       console.error("Lỗi khi lấy quyền:", error);

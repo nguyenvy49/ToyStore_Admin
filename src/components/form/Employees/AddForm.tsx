@@ -16,7 +16,7 @@ export default function AddForm() {
     const newErrors: { name: string; message: string }[] = [];
 
     // validate text fields
-    if (!values.fullName) newErrors.push({ name: "fullName", message: "Tiêu đề không được để trống" });
+    if (!values.fullName) newErrors.push({ name: "fullName", message: "Tên nhân viên không được để trống" });
     if (!values.phoneNumber) newErrors.push({ name: "phoneNumber", message: "Số điện thoại không được để trống" });
     if (!values.email) newErrors.push({ name: "email", message: "Email không được để trống" });
     if (!values.address) newErrors.push({ name: "address", message: "Địa chỉ không được để trống" });

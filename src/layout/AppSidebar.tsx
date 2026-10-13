@@ -50,6 +50,7 @@ const navPermissionMap: Record<string, string[]> = {
   "/suppliers": ["SUPPLIER_VIEW"],
   "/warehouses": ["WAREHOUSE_VIEW"],
   "/employees": ["STAFF_VIEW"],
+  "/employees/deleted": ["STAFF_VIEW"],
   "/employees/authorization": ["PERMISSION_VIEW"],
   "/customers": ["USER_VIEW"],
 };

@@ -58,6 +58,8 @@ export function getFirstImageFromString(image?: string | null): string | null {
 }
 
 export function groupPermissions(permissions: PermissionType[]): PermissionListType[] {
+  if (!Array.isArray(permissions)) return [];
+
   const moduleNameMap: Record<string, string> = {
     category: 'danh mục',
     news: 'tin tức',
@@ -74,10 +76,9 @@ export function groupPermissions(permissions: PermissionType[]): PermissionListT
 
   const grouped = permissions.reduce<Record<string, { key: string; name: string; role: PermissionType[] }>>(
     (acc, perm) => {
-      const [module, action] = perm.code.split('_');
-      if (!module || !action) return acc;
-
-      const moduleKey = module.toLowerCase();
+      if (!perm || !perm.code) return acc;
+      const parts = perm.code.split('_');
+      const moduleKey = parts[0]?.toLowerCase() || 'other';
 
       if (!acc[moduleKey]) {
         acc[moduleKey] = {

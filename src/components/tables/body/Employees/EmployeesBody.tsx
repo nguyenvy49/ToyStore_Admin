@@ -40,23 +40,28 @@ const EmployeesBody: React.FC<UserPermissionTableBodyProps> = ({
               {item.email}
             </TableCell>
             <TableCell className="px-2 py-1 text-gray-500 text-theme-sm dark:text-gray-400">
-              {item.roles.map((role) => (
-                <Badge key={role} variant="solid" color={role === "staff" ? "success" : "info"}>{role == "staff" ? "Nhân viên" : "Quản lý"}</Badge>
-              ))}
-            </TableCell>
-            <TableCell className="px-2 py-1 text-gray-500 text-theme-sm dark:text-gray-400">
-              {new Date(item.createdOn).toLocaleDateString()}
-            </TableCell>
-            <TableCell className="px-2 py-1 text-gray-500 text-theme-sm dark:text-gray-400">
               <Badge color={item.gender == 0 ? "info" : "error"} size="sm">
                 {item.gender == 0 ? "Nam" : "Nữ"}
               </Badge>
             </TableCell>
             <TableCell className="px-2 py-1 text-gray-500 text-theme-sm dark:text-gray-400">
-              {item.createdBy}
+              {item.roles.map((role) => (
+                <Badge key={role} variant="solid" color={role === "staff" ? "success" : "info"}>{role == "staff" ? "Nhân viên" : "Quản lý"}</Badge>
+              ))}
             </TableCell>
             <TableCell className="px-2 py-1 text-gray-500 text-theme-sm dark:text-gray-400">
-              {item.updatedBy}
+              {item.createdOn ? new Date(item.createdOn).toLocaleDateString() : "-"}
+            </TableCell>
+            <TableCell className="px-2 py-1 text-gray-500 text-theme-sm dark:text-gray-400">
+              <Badge color={item.isDeleted ? "error" : "success"} size="sm">
+                {item.isDeleted ? "Đã khóa" : "Hoạt động"}
+              </Badge>
+            </TableCell>
+            <TableCell className="px-2 py-1 text-gray-500 text-theme-sm dark:text-gray-400">
+              {item.createdBy || "-"}
+            </TableCell>
+            <TableCell className="px-2 py-1 text-gray-500 text-theme-sm dark:text-gray-400">
+              {item.updatedBy || "-"}
             </TableCell>
             <TableCell className="px-2 py-1 text-gray-500 text-theme-sm dark:text-gray-400">
               <div className="flex flex-col gap-2">
