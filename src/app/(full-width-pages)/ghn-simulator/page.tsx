@@ -8,36 +8,59 @@ import { GhnFrontendService } from "@/services/ghnService";
 import { OrderType } from "@/schemaValidations/order.schema";
 import { formatCurrency, formatDateTime } from "@/utils/format";
 import { getOrderStatusText, getOrderStatusBadgeClass } from "@/utils/ghnStatusHelper";
-import {
-  FaTruck, FaCheckCircle, FaExclamationTriangle,
-  FaArrowLeft, FaSync, FaLock, FaCheck, FaSearch
+import { 
+  FaTruck, FaCheckCircle, FaExclamationTriangle, 
+  FaArrowLeft, FaSync, FaLock, FaCheck, FaSearch,
+  FaUndoAlt, FaTimesCircle
 } from "react-icons/fa";
 
-// Thứ tự tiến trình 1 chiều chuẩn của GHN
-const PIPELINE_STEPS = [
-  { code: "ready_to_pick", name: "Chờ lấy hàng", desc: "Mới tạo đơn, chờ bưu tá lấy" },
-  { code: "picking", name: "Đang lấy hàng", desc: "Bưu tá đang đến lấy hàng" },
-  { code: "picked", name: "Đã lấy hàng", desc: "Bưu tá đã nhận hàng về kho" },
-  { code: "storing", name: "Nhập kho bưu cục", desc: "Hàng đã nhập kho bưu cục phát" },
-  { code: "transporting", name: "Đang luân chuyển", desc: "Đang trung chuyển liên kho" },
-  { code: "sorting", name: "Đang phân loại", desc: "Đang phân loại tại Hub" },
-  { code: "delivering", name: "Đang giao hàng", desc: "Shipper đang đi phát hàng" },
-  { code: "delivered", name: "Đã giao hàng", desc: "Giao thành công cho khách (Hoàn tất)" },
+// 1. Tiến trình giao hàng chuẩn của GHN (tuần tự 1 chiều)
+const DELIVERY_STEPS = [
+  { code: "ready_to_pick", name: "Chờ lấy hàng", desc: "Mới tạo đơn, chờ bưu tá lấy", rank: 10 },
+  { code: "picking", name: "Đang lấy hàng", desc: "Bưu tá đang đến lấy hàng", rank: 20 },
+  { code: "picked", name: "Đã lấy hàng", desc: "Bưu tá đã nhận hàng về kho", rank: 30 },
+  { code: "storing", name: "Nhập kho bưu cục", desc: "Hàng đã nhập kho bưu cục phát", rank: 40 },
+  { code: "transporting", name: "Đang luân chuyển", desc: "Đang trung chuyển liên kho", rank: 50 },
+  { code: "sorting", name: "Đang phân loại", desc: "Đang phân loại tại Hub", rank: 60 },
+  { code: "delivering", name: "Đang giao hàng", desc: "Shipper đang đi phát hàng", rank: 70 },
+  { code: "delivered", name: "Đã giao hàng", desc: "Giao thành công cho khách (Hoàn tất ⭐)", rank: 80 },
 ];
 
-const TERMINAL_STATUSES = ["delivered", "cancel", "returned"];
+// 2. Nhánh ngoại lệ: Không nhận hàng, hoàn hàng, hủy đơn
+const EXCEPTION_STEPS = [
+  { code: "delivery_fail", name: "Giao thất bại / Không nhận", desc: "Khách hẹn lại hoặc từ chối nhận hàng", rank: 75 },
+  { code: "return", name: "Đang chuyển hoàn", desc: "Hàng đang trên đường chuyển hoàn về Shop", rank: 85 },
+  { code: "returning", name: "Đang trả hàng về Shop", desc: "Shipper đang đi giao trả hàng cho Shop", rank: 90 },
+  { code: "returned", name: "Đã hoàn hàng về Shop", desc: "Shop đã nhận lại hàng hoàn (Hoàn tất)", rank: 95 },
+  { code: "cancel", name: "Đã hủy đơn hàng", desc: "Đơn hàng đã được hủy (Hoàn tất)", rank: 100 },
+];
 
-const STATUS_INDEX_MAP: Record<string, number> = {
-  ready_to_pick: 1,
-  picking: 2,
-  money_collect_picking: 2,
-  picked: 3,
-  storing: 4,
-  transporting: 5,
-  sorting: 6,
-  delivering: 7,
-  money_collect_delivering: 7,
-  delivered: 8,
+// Tất cả các bước
+const ALL_STEPS = [...DELIVERY_STEPS, ...EXCEPTION_STEPS];
+
+// Trạng thái kết thúc - Đã tới đây thì KHÓA HOÀN TOÀN
+const TERMINAL_STATUSES = ["delivered", "returned", "cancel"];
+
+// Thứ bậc số để so sánh tiến trình 1 chiều
+const STATUS_RANK_MAP: Record<string, number> = {
+  ready_to_pick: 10,
+  picking: 20,
+  money_collect_picking: 20,
+  picked: 30,
+  storing: 40,
+  transporting: 50,
+  sorting: 60,
+  delivering: 70,
+  money_collect_delivering: 70,
+  delivered: 80,
+  delivery_fail: 75,
+  waiting_to_return: 80,
+  return: 85,
+  return_transporting: 85,
+  return_sorting: 85,
+  returning: 90,
+  returned: 95,
+  cancel: 100,
 };
 
 function GhnStandaloneContent() {
@@ -55,7 +78,7 @@ function GhnStandaloneContent() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error" | "info"; msg: string } | null>(null);
 
-  // Hàm tìm kiếm đơn theo mã người dùng nhập vào
+  // Tìm kiếm đơn theo mã người dùng nhập
   const handleSearchOrder = async (searchCode?: string) => {
     const code = (searchCode ?? orderCodeInput).trim();
     if (!code) {
@@ -85,8 +108,8 @@ function GhnStandaloneContent() {
 
           // Gợi ý bước tiếp theo
           const curStatus = (match.ghnStatus || "ready_to_pick").toLowerCase().trim();
-          const curIdx = STATUS_INDEX_MAP[curStatus] || 1;
-          const next = PIPELINE_STEPS.find((s) => (STATUS_INDEX_MAP[s.code] || 0) > curIdx);
+          const curRank = STATUS_RANK_MAP[curStatus] || 10;
+          const next = DELIVERY_STEPS.find((s) => s.rank > curRank);
           setTargetStatus(next && !TERMINAL_STATUSES.includes(curStatus) ? next.code : "");
           setFeedback(null);
         } else {
@@ -119,17 +142,33 @@ function GhnStandaloneContent() {
     return (selectedOrder.ghnStatus || "ready_to_pick").toLowerCase().trim();
   }, [selectedOrder]);
 
-  const currentIndex = STATUS_INDEX_MAP[currentStatus] || 1;
+  const currentRank = STATUS_RANK_MAP[currentStatus] || 10;
   const isTerminal = TERMINAL_STATUSES.includes(currentStatus);
 
-  // Kiểm tra 1 trạng thái có được chọn hay không (1 chiều)
+  // Kiểm tra 1 trạng thái có được chọn hay không (tuân thủ quy tắc 1 chiều)
   const isStatusAllowed = (statusCode: string) => {
     if (!selectedOrder || isTerminal) return false;
     if (statusCode === currentStatus) return false;
-    const targetIdx = STATUS_INDEX_MAP[statusCode];
-    if (!targetIdx) return false;
-    // Trạng thái đã qua không quay về được
-    return targetIdx > currentIndex;
+
+    const targetRank = STATUS_RANK_MAP[statusCode];
+    if (!targetRank) return false;
+
+    // Không thể quay lùi về bước có thứ tự nhỏ hơn
+    if (targetRank < currentRank) return false;
+
+    // Các quy tắc đặc thù cho luồng hoàn trả:
+    // Nếu đơn đã vào luồng hoàn trả (delivery_fail, return, returning), không thể chuyển sang delivered
+    const isInReturnPath = ["delivery_fail", "waiting_to_return", "return", "return_transporting", "returning"].includes(currentStatus);
+    if (isInReturnPath && statusCode === "delivered") {
+      return false;
+    }
+
+    // Không nhận hàng / Giao thất bại: chỉ được chọn khi đang giao hàng hoặc đang xử lý
+    if (statusCode === "delivery_fail" && currentRank < 60) {
+      return false;
+    }
+
+    return true;
   };
 
   // Cập nhật trạng thái
@@ -147,7 +186,7 @@ function GhnStandaloneContent() {
     if (!targetStatus || !isStatusAllowed(targetStatus)) {
       setFeedback({
         type: "error",
-        msg: "Vui lòng chọn một trạng thái hợp lệ tiếp theo (không được chọn trạng thái cũ).",
+        msg: "Vui lòng chọn một trạng thái hợp lệ tiếp theo (không được chọn trạng thái cũ đã qua).",
       });
       return;
     }
@@ -155,7 +194,7 @@ function GhnStandaloneContent() {
     setIsSubmitting(true);
     setFeedback(null);
 
-    const stepObj = PIPELINE_STEPS.find((s) => s.code === targetStatus);
+    const stepObj = ALL_STEPS.find((s) => s.code === targetStatus);
     const desc = stepObj?.desc || `Cập nhật trạng thái GHN sang ${targetStatus}`;
     const codeToSend = selectedOrder.ghnOrderCode || orderCodeInput || `DEV_${selectedOrder.id.slice(0, 8)}`;
 
@@ -172,6 +211,8 @@ function GhnStandaloneContent() {
       Warehouse: "Bưu cục GHN Cầu Giấy (HN-CG-01)",
       ShipperName: "Trần Văn Giao",
       ShipperPhone: "0988123456",
+      Reason: targetStatus === "delivery_fail" ? "Người nhận từ chối nhận hàng" : "",
+      ReasonCode: targetStatus === "delivery_fail" ? "KH_TU_CHOI_NHAN" : "",
     };
 
     try {
@@ -180,7 +221,7 @@ function GhnStandaloneContent() {
         const newStatusName = stepObj?.name || targetStatus;
         setFeedback({
           type: "success",
-          msg: `✅ Đã cập nhật trạng thái thành công sang "${newStatusName}". Khách hàng đã nhận được thông báo realtime!`,
+          msg: `✅ Đã cập nhật thành công sang "${newStatusName}". Phía khách hàng đã nhận được thông báo realtime!`,
         });
 
         // Cập nhật state đơn hàng ngay trên UI
@@ -191,8 +232,8 @@ function GhnStandaloneContent() {
         });
 
         // Gợi ý bước kế tiếp
-        const newIdx = STATUS_INDEX_MAP[targetStatus] || 0;
-        const nextStep = PIPELINE_STEPS.find((s) => (STATUS_INDEX_MAP[s.code] || 0) > newIdx);
+        const newRank = STATUS_RANK_MAP[targetStatus] || 0;
+        const nextStep = ALL_STEPS.find((s) => s.rank > newRank && isStatusAllowed(s.code));
         setTargetStatus(nextStep && !TERMINAL_STATUSES.includes(targetStatus) ? nextStep.code : "");
       } else {
         setFeedback({
@@ -209,7 +250,7 @@ function GhnStandaloneContent() {
 
   return (
     <div className="min-h-screen bg-[#f4f6f8] text-gray-800 antialiased">
-      {/* HEADER TOPBAR GHN (KHÔNG CÓ SIDEBAR) */}
+      {/* HEADER TOPBAR GHN (ĐỘC LẬP - KHÔNG SIDEBAR) */}
       <header className="bg-[#001e3d] text-white border-b-4 border-[#f26522] sticky top-0 z-30 shadow-md">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -246,12 +287,13 @@ function GhnStandaloneContent() {
         {/* THÔNG BÁO PHẢN HỒI */}
         {feedback && (
           <div
-            className={`p-3.5 rounded-xl border text-xs font-medium flex items-center gap-2.5 transition ${feedback.type === "success"
-              ? "bg-emerald-50 border-emerald-300 text-emerald-800"
-              : feedback.type === "error"
+            className={`p-3.5 rounded-xl border text-xs font-medium flex items-center gap-2.5 transition ${
+              feedback.type === "success"
+                ? "bg-emerald-50 border-emerald-300 text-emerald-800"
+                : feedback.type === "error"
                 ? "bg-rose-50 border-rose-300 text-rose-800"
                 : "bg-blue-50 border-blue-300 text-blue-800"
-              }`}
+            }`}
           >
             {feedback.type === "success" ? (
               <FaCheckCircle className="text-emerald-600 text-base shrink-0" />
@@ -280,7 +322,7 @@ function GhnStandaloneContent() {
                     handleSearchOrder();
                   }
                 }}
-                placeholder="Nhập mã vận đơn"
+                placeholder="Nhập mã vận đơn (nhấn Enter để tìm)..."
                 className="w-full text-sm font-mono font-bold uppercase border border-gray-300 rounded-xl px-4 py-3 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#f26522] focus:border-transparent outline-none transition"
               />
             </div>
@@ -288,10 +330,11 @@ function GhnStandaloneContent() {
               type="button"
               disabled={searching || !orderCodeInput.trim()}
               onClick={() => handleSearchOrder()}
-              className={`px-5 py-3 rounded-xl font-bold text-xs sm:text-sm text-white flex items-center gap-2 transition ${searching || !orderCodeInput.trim()
-                ? "bg-gray-300 cursor-not-allowed"
-                : "bg-[#f26522] hover:bg-[#d9531e] shadow-xs active:scale-[0.98]"
-                }`}
+              className={`px-5 py-3 rounded-xl font-bold text-xs sm:text-sm text-white flex items-center gap-2 transition ${
+                searching || !orderCodeInput.trim()
+                  ? "bg-gray-300 cursor-not-allowed"
+                  : "bg-[#f26522] hover:bg-[#d9531e] shadow-xs active:scale-[0.98]"
+              }`}
             >
               {searching ? (
                 <>
@@ -365,82 +408,164 @@ function GhnStandaloneContent() {
               )}
             </div>
 
-            {/* 3. BẢNG TIẾN TRÌNH CẬP NHẬT TRẠNG THÁI (1 CHIỀU) */}
-            <div className="p-5 pt-3 border-t border-gray-100 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                  Chọn trạng thái tiếp theo để cập nhật:
-                </span>
-                <span className="text-[11px] text-gray-400">
-                  Trạng thái đã qua không thể quay lại • Đã giao không thể đổi
-                </span>
+            {/* 3. BẢNG CẬP NHẬT TRẠNG THÁI */}
+            <div className="p-5 pt-3 border-t border-gray-100 space-y-4">
+              {/* PHẦN 1: TIẾN TRÌNH GIAO HÀNG CHUẨN */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <FaTruck className="text-blue-600" />
+                    1. Tiến trình giao hàng chuẩn
+                  </span>
+                  <span className="text-[11px] text-gray-400">
+                    Trạng thái đã qua không quay lại • Đã giao không thể đổi
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                  {DELIVERY_STEPS.map((step, idx) => {
+                    const isPast = step.rank < currentRank;
+                    const isCurrent = step.code === currentStatus;
+                    const isSelected = targetStatus === step.code;
+                    const allowed = isStatusAllowed(step.code);
+
+                    let cardStyle = "";
+                    if (isCurrent) {
+                      cardStyle = "bg-orange-50 border-orange-400 ring-2 ring-orange-400/20";
+                    } else if (isPast) {
+                      cardStyle = "bg-gray-100/70 border-gray-200 opacity-50 cursor-not-allowed";
+                    } else if (isSelected) {
+                      cardStyle = "bg-emerald-50 border-emerald-500 ring-2 ring-emerald-500/30 shadow-xs";
+                    } else if (allowed) {
+                      cardStyle = "bg-white border-gray-200 hover:border-[#f26522] hover:bg-orange-50/20 cursor-pointer";
+                    } else {
+                      cardStyle = "bg-gray-50 border-gray-200 opacity-40 cursor-not-allowed";
+                    }
+
+                    return (
+                      <button
+                        key={step.code}
+                        type="button"
+                        disabled={!allowed}
+                        onClick={() => {
+                          if (allowed) setTargetStatus(step.code);
+                        }}
+                        className={`p-3 rounded-xl border text-left transition flex flex-col justify-between min-h-[85px] ${cardStyle}`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-1 mb-1">
+                            <span className="text-xs font-bold text-gray-900">{step.name}</span>
+                            {isPast && (
+                              <span className="text-[10px] text-gray-500 flex items-center gap-1 font-medium">
+                                <FaCheck className="text-emerald-600 text-[9px]" />
+                                <span>Đã qua</span>
+                              </span>
+                            )}
+                            {isCurrent && (
+                              <span className="text-[10px] font-bold text-[#f26522] bg-orange-100 px-1.5 py-0.5 rounded">
+                                Hiện tại
+                              </span>
+                            )}
+                            {isSelected && (
+                              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                <FaCheckCircle className="text-[10px]" />
+                                Chọn
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-gray-500 leading-snug line-clamp-2">
+                            {step.desc}
+                          </p>
+                        </div>
+
+                        <div className="mt-2 text-[10px] font-mono text-gray-400 flex items-center justify-between">
+                          <span>{step.code}</span>
+                          <span>Bước {idx + 1}/8</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Danh sách các bước */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                {PIPELINE_STEPS.map((step, idx) => {
-                  const stepIndex = idx + 1;
-                  const isPast = stepIndex < currentIndex;
-                  const isCurrent = step.code === currentStatus;
-                  const isSelected = targetStatus === step.code;
-                  const allowed = isStatusAllowed(step.code);
+              {/* PHẦN 2: KHÔNG NHẬN HÀNG, HOÀN HÀNG, HỦY ĐƠN */}
+              <div className="space-y-2 pt-2 border-t border-gray-100">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-rose-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <FaUndoAlt className="text-rose-600" />
+                    2. Không nhận hàng • Hoàn trả • Hủy đơn
+                  </span>
+                  <span className="text-[11px] text-gray-400">
+                    Chỉ cập nhật khi giao không thành công hoặc khách từ chối
+                  </span>
+                </div>
 
-                  let cardStyle = "";
-                  if (isCurrent) {
-                    cardStyle = "bg-orange-50 border-orange-400 ring-2 ring-orange-400/20";
-                  } else if (isPast) {
-                    cardStyle = "bg-gray-100/70 border-gray-200 opacity-50 cursor-not-allowed";
-                  } else if (isSelected) {
-                    cardStyle = "bg-emerald-50 border-emerald-500 ring-2 ring-emerald-500/30 shadow-xs";
-                  } else if (allowed) {
-                    cardStyle = "bg-white border-gray-200 hover:border-[#f26522] hover:bg-orange-50/20 cursor-pointer";
-                  } else {
-                    cardStyle = "bg-gray-50 border-gray-200 opacity-40 cursor-not-allowed";
-                  }
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                  {EXCEPTION_STEPS.map((step) => {
+                    const isPast = step.rank < currentRank;
+                    const isCurrent = step.code === currentStatus;
+                    const isSelected = targetStatus === step.code;
+                    const allowed = isStatusAllowed(step.code);
 
-                  return (
-                    <button
-                      key={step.code}
-                      type="button"
-                      disabled={!allowed}
-                      onClick={() => {
-                        if (allowed) setTargetStatus(step.code);
-                      }}
-                      className={`p-3 rounded-xl border text-left transition flex flex-col justify-between min-h-[85px] ${cardStyle}`}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between gap-1 mb-1">
-                          <span className="text-xs font-bold text-gray-900">{step.name}</span>
-                          {isPast && (
-                            <span className="text-[10px] text-gray-500 flex items-center gap-1 font-medium">
-                              <FaCheck className="text-emerald-600 text-[9px]" />
-                              <span>Đã qua</span>
+                    let cardStyle = "";
+                    if (isCurrent) {
+                      cardStyle = "bg-rose-50 border-rose-400 ring-2 ring-rose-400/20";
+                    } else if (isPast) {
+                      cardStyle = "bg-gray-100/70 border-gray-200 opacity-50 cursor-not-allowed";
+                    } else if (isSelected) {
+                      cardStyle = "bg-rose-100 border-rose-500 ring-2 ring-rose-500/30 shadow-xs";
+                    } else if (allowed) {
+                      cardStyle = "bg-white border-rose-200 hover:border-rose-400 hover:bg-rose-50/30 cursor-pointer";
+                    } else {
+                      cardStyle = "bg-gray-50 border-gray-200 opacity-40 cursor-not-allowed";
+                    }
+
+                    return (
+                      <button
+                        key={step.code}
+                        type="button"
+                        disabled={!allowed}
+                        onClick={() => {
+                          if (allowed) setTargetStatus(step.code);
+                        }}
+                        className={`p-3 rounded-xl border text-left transition flex flex-col justify-between min-h-[85px] ${cardStyle}`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-1 mb-1">
+                            <span className="text-xs font-bold text-gray-900 flex items-center gap-1">
+                              {step.code === "cancel" ? <FaTimesCircle className="text-red-500" /> : <FaUndoAlt className="text-orange-500" />}
+                              {step.name}
                             </span>
-                          )}
-                          {isCurrent && (
-                            <span className="text-[10px] font-bold text-[#f26522] bg-orange-100 px-1.5 py-0.5 rounded">
-                              Hiện tại
-                            </span>
-                          )}
-                          {isSelected && (
-                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded flex items-center gap-1">
-                              <FaCheckCircle className="text-[10px]" />
-                              Chọn
-                            </span>
-                          )}
+                            {isPast && (
+                              <span className="text-[10px] text-gray-500 flex items-center gap-1 font-medium">
+                                <FaCheck className="text-emerald-600 text-[9px]" />
+                                <span>Đã qua</span>
+                              </span>
+                            )}
+                            {isCurrent && (
+                              <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded">
+                                Hiện tại
+                              </span>
+                            )}
+                            {isSelected && (
+                              <span className="text-[10px] font-bold text-rose-800 bg-rose-200 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                <FaCheckCircle className="text-[10px]" />
+                                Chọn
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-gray-500 leading-snug line-clamp-2">
+                            {step.desc}
+                          </p>
                         </div>
-                        <p className="text-[11px] text-gray-500 leading-snug line-clamp-2">
-                          {step.desc}
-                        </p>
-                      </div>
 
-                      <div className="mt-2 text-[10px] font-mono text-gray-400 flex items-center justify-between">
-                        <span>{step.code}</span>
-                        <span>{stepIndex}/8</span>
-                      </div>
-                    </button>
-                  );
-                })}
+                        <div className="mt-2 text-[10px] font-mono text-gray-400">
+                          {step.code}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Thông báo khóa khi đã giao thành công */}
@@ -453,6 +578,16 @@ function GhnStandaloneContent() {
                 </div>
               )}
 
+              {/* Thông báo khóa khi đã trả hàng hoặc hủy */}
+              {(currentStatus === "returned" || currentStatus === "cancel") && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2.5 text-xs text-rose-800 font-medium">
+                  <FaLock className="text-rose-600 text-base shrink-0" />
+                  <span>
+                    Đơn hàng đã kết thúc (<strong>{currentStatus}</strong>). Hành trình đã đóng, không thể cập nhật thêm.
+                  </span>
+                </div>
+              )}
+
               {/* Nút Cập nhật trạng thái */}
               {!isTerminal && (
                 <div className="pt-2">
@@ -460,20 +595,22 @@ function GhnStandaloneContent() {
                     type="button"
                     disabled={isSubmitting || !targetStatus || !isStatusAllowed(targetStatus)}
                     onClick={handleUpdateStatus}
-                    className={`w-full py-3.5 px-6 rounded-xl font-bold text-xs sm:text-sm text-white shadow-xs flex items-center justify-center gap-2 transition ${isSubmitting || !targetStatus || !isStatusAllowed(targetStatus)
-                      ? "bg-gray-300 cursor-not-allowed text-gray-500 shadow-none"
-                      : "bg-[#f26522] hover:bg-[#d9531e] active:scale-[0.99] shadow-orange-500/20"
-                      }`}
+                    className={`w-full py-3.5 px-6 rounded-xl font-bold text-xs sm:text-sm text-white shadow-xs flex items-center justify-center gap-2 transition ${
+                      isSubmitting || !targetStatus || !isStatusAllowed(targetStatus)
+                        ? "bg-gray-300 cursor-not-allowed text-gray-500 shadow-none"
+                        : "bg-[#f26522] hover:bg-[#d9531e] active:scale-[0.99] shadow-orange-500/20"
+                    }`}
                   >
                     <FaTruck />
                     <span>
                       {isSubmitting
                         ? "Đang gửi webhook cập nhật trạng thái..."
                         : targetStatus
-                          ? `CẬP NHẬT TRẠNG THÁI ➔ ${PIPELINE_STEPS.find((s) => s.code === targetStatus)?.name?.toUpperCase() ||
-                          targetStatus.toUpperCase()
+                        ? `CẬP NHẬT TRẠNG THÁI ➔ ${
+                            ALL_STEPS.find((s) => s.code === targetStatus)?.name?.toUpperCase() ||
+                            targetStatus.toUpperCase()
                           }`
-                          : "HÃY CLICK CHỌN 1 TRẠNG THÁI KẾ TIẾP Ở TRÊN"}
+                        : "HÃY CLICK CHỌN 1 TRẠNG THÁI KẾ TIẾP Ở TRÊN"}
                     </span>
                   </button>
                 </div>
