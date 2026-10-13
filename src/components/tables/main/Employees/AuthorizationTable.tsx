@@ -11,6 +11,7 @@ import { PermissionType } from "@/schemaValidations/permission.schema";
 import { Loading } from "@/components/common/Loading";
 import { NoData } from "@/components/common/NoData";
 import { useNotification } from "@/context/NotificationContext";
+import { useUserPermission } from "@/context/UserPermissionContext";
 
 interface PermissionsUser {
   sale: PermissionType[];
@@ -26,6 +27,7 @@ export default function BasicTables() {
     warehouse: [],
   });
   const { openNotification } = useNotification();
+  const { refreshPermissions } = useUserPermission();
 
   const [loading, setLoading] = useState(true);
   const [loadingPermission, setLoadingPermission] = useState(false);
@@ -104,6 +106,8 @@ export default function BasicTables() {
         const res1 = await PermissionService.addStaffTypePermission(payloadSales);
         const res2 = await PermissionService.addStaffTypePermission(payloadWarehouse);
         console.log("Kết quả phân quyền: ", res1, res2);
+
+        await refreshPermissions?.();
 
         // Thông báo thành công hoặc cập nhật giao diện nếu cần
         openNotification({

@@ -24,31 +24,30 @@ export default function AdminLayout({
       : "lg:ml-[90px]";
 
   return (
-    <div className="min-h-screen xl:flex relative">
-      {/* Sidebar */}
-      <UserPermissionProvider>
+    <UserPermissionProvider>
+      <div className="min-h-screen xl:flex relative">
+        {/* Sidebar */}
         <AppSidebar setHandling={setHandling} handling={handling} />
-      </UserPermissionProvider>
 
-
-      {/* Main Content Area */}
-      <div
-        className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}
-      >
-        {/* Header */}
-        <AppHeader />
-        {/* Page Content */}
-        <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">{children}</div>
-      </div>
-
-      {/* Overlay khi logout */}
-      {handling && (
-        <div className="fixed inset-0 bg-black/30 z-[9999] flex items-center justify-center pointer-events-auto">
-          <Flex align="center" gap="middle">
-            <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
-          </Flex>
+        {/* Main Content Area */}
+        <div
+          className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}
+        >
+          {/* Header */}
+          <AppHeader />
+          {/* Page Content */}
+          <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">{children}</div>
         </div>
-      )}
-    </div>
+
+        {/* Overlay khi logout */}
+        {handling && (
+          <div className="fixed inset-0 bg-black/30 z-[9999] flex items-center justify-center pointer-events-auto">
+            <Flex align="center" gap="middle">
+              <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
+            </Flex>
+          </div>
+        )}
+      </div>
+    </UserPermissionProvider>
   );
 }

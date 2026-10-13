@@ -55,19 +55,25 @@ const navPermissionMap: Record<string, string[]> = {
   "/customers": ["USER_VIEW"],
 };
 
-const filterNavItemsByPermissions = (navItems: NavItem[], permissions: string[]): NavItem[] => {
+const filterNavItemsByPermissions = (navItems: NavItem[], permissions: string[], isManager: boolean = false): NavItem[] => {
+  if (isManager) return navItems;
+
+  const permSet = new Set(permissions.map(p => p?.toUpperCase().trim()));
+
   return navItems
     .map(item => {
       if (item.subItems) {
         const filteredSubItems = item.subItems.filter(sub => {
           const required = navPermissionMap[sub.path] || [];
-          return required.every(p => permissions.includes(p));
+          if (required.length === 0) return true;
+          return required.every(p => permSet.has(p.toUpperCase().trim()));
         });
         if (filteredSubItems.length === 0) return null; // bỏ item nếu không còn subItems
         return { ...item, subItems: filteredSubItems };
       } else {
         const required = item.path ? navPermissionMap[item.path] || [] : [];
-        if (!required.every(p => permissions.includes(p))) return null;
+        if (required.length === 0) return true;
+        if (!required.every(p => permSet.has(p.toUpperCase().trim()))) return null;
         return item;
       }
     })
@@ -117,17 +123,20 @@ const AppSidebar: React.FC<Props> = ({ setHandling, handling }) => {
     }
   }, [openSubmenu]);
 
+  // Kiểm tra role Manager từ cookie
+  const isManager = typeof document !== "undefined" && document.cookie.includes("roleUser=manager");
+
   // Lọc menu dựa trên quyền
   const permissionCodes = userPermissions?.permissions
-    .filter(p => p.isGranted)   // nếu bạn muốn chỉ lấy quyền được cấp
-    .map(p => p.code) || [];
+    ?.filter(p => p.isGranted)
+    ?.map(p => p.code) || [];
 
-  const filteredNavItems = filterNavItemsByPermissions(navItems, permissionCodes);
+  const filteredNavItems = filterNavItemsByPermissions(navItems, permissionCodes, isManager);
 
   const renderMenuItems = (items: NavItem[], menuType: "main" | "others") => (
     <ul className="flex flex-col gap-4">
       {items.map((nav, index) => (
-        <li key={nav.name}>
+        <li key={`${menuType}-${nav.name}-${index}`}>
           {nav.subItems ? (
             <>
               <button

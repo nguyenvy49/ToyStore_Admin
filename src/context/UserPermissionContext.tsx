@@ -56,7 +56,11 @@ export const UserPermissionProvider: React.FC<{ children: React.ReactNode }> = (
 export const useUserPermission = () => {
   const context = useContext(UserPermissionContext);
   if (!context) {
-    throw new Error("useUserPermission phải được sử dụng trong UserPermissionProvider");
+    return {
+      userPermissions: null,
+      loadingUserPermissions: false,
+      refreshPermissions: async () => {},
+    };
   }
   return context;
 };
