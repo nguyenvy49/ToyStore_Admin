@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import React, { useState, useEffect, useMemo, Suspense } from "react";
@@ -7,8 +8,8 @@ import { GhnFrontendService } from "@/services/ghnService";
 import { OrderType } from "@/schemaValidations/order.schema";
 import { formatCurrency, formatDateTime } from "@/utils/format";
 import { getOrderStatusText, getOrderStatusBadgeClass } from "@/utils/ghnStatusHelper";
-import { 
-  FaTruck, FaCheckCircle, FaExclamationTriangle, 
+import {
+  FaTruck, FaCheckCircle, FaExclamationTriangle,
   FaArrowLeft, FaSync, FaLock, FaCheck, FaSearch
 } from "react-icons/fa";
 
@@ -245,13 +246,12 @@ function GhnStandaloneContent() {
         {/* THÔNG BÁO PHẢN HỒI */}
         {feedback && (
           <div
-            className={`p-3.5 rounded-xl border text-xs font-medium flex items-center gap-2.5 transition ${
-              feedback.type === "success"
+            className={`p-3.5 rounded-xl border text-xs font-medium flex items-center gap-2.5 transition ${feedback.type === "success"
                 ? "bg-emerald-50 border-emerald-300 text-emerald-800"
                 : feedback.type === "error"
-                ? "bg-rose-50 border-rose-300 text-rose-800"
-                : "bg-blue-50 border-blue-300 text-blue-800"
-            }`}
+                  ? "bg-rose-50 border-rose-300 text-rose-800"
+                  : "bg-blue-50 border-blue-300 text-blue-800"
+              }`}
           >
             {feedback.type === "success" ? (
               <FaCheckCircle className="text-emerald-600 text-base shrink-0" />
@@ -288,11 +288,10 @@ function GhnStandaloneContent() {
               type="button"
               disabled={searching || !orderCodeInput.trim()}
               onClick={() => handleSearchOrder()}
-              className={`px-5 py-3 rounded-xl font-bold text-xs sm:text-sm text-white flex items-center gap-2 transition ${
-                searching || !orderCodeInput.trim()
+              className={`px-5 py-3 rounded-xl font-bold text-xs sm:text-sm text-white flex items-center gap-2 transition ${searching || !orderCodeInput.trim()
                   ? "bg-gray-300 cursor-not-allowed"
                   : "bg-[#f26522] hover:bg-[#d9531e] shadow-xs active:scale-[0.98]"
-              }`}
+                }`}
             >
               {searching ? (
                 <>
@@ -464,22 +463,20 @@ function GhnStandaloneContent() {
                     type="button"
                     disabled={isSubmitting || !targetStatus || !isStatusAllowed(targetStatus)}
                     onClick={handleUpdateStatus}
-                    className={`w-full py-3.5 px-6 rounded-xl font-bold text-xs sm:text-sm text-white shadow-xs flex items-center justify-center gap-2 transition ${
-                      isSubmitting || !targetStatus || !isStatusAllowed(targetStatus)
+                    className={`w-full py-3.5 px-6 rounded-xl font-bold text-xs sm:text-sm text-white shadow-xs flex items-center justify-center gap-2 transition ${isSubmitting || !targetStatus || !isStatusAllowed(targetStatus)
                         ? "bg-gray-300 cursor-not-allowed text-gray-500 shadow-none"
                         : "bg-[#f26522] hover:bg-[#d9531e] active:scale-[0.99] shadow-orange-500/20"
-                    }`}
+                      }`}
                   >
                     <FaTruck />
                     <span>
                       {isSubmitting
                         ? "Đang gửi webhook cập nhật trạng thái..."
                         : targetStatus
-                        ? `CẬP NHẬT TRẠNG THÁI ➔ ${
-                            PIPELINE_STEPS.find((s) => s.code === targetStatus)?.name?.toUpperCase() ||
-                            targetStatus.toUpperCase()
+                          ? `CẬP NHẬT TRẠNG THÁI ➔ ${PIPELINE_STEPS.find((s) => s.code === targetStatus)?.name?.toUpperCase() ||
+                          targetStatus.toUpperCase()
                           }`
-                        : "HÃY CLICK CHỌN 1 TRẠNG THÁI KẾ TIẾP Ở TRÊN"}
+                          : "HÃY CLICK CHỌN 1 TRẠNG THÁI KẾ TIẾP Ở TRÊN"}
                     </span>
                   </button>
                 </div>
